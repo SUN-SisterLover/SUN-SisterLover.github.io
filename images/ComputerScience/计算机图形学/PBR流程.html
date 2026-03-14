@@ -1,0 +1,334 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#8E71C1"><meta name="author" content="浔浔"><meta name="copyright" content="浔浔"><meta name="generator" content="Hexo 8.1.1"><meta name="theme" content="hexo-theme-yun"><title>MyWebsite</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@900&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://fastly.jsdelivr.net/npm/star-markdown-css@0.4.1/dist/yun/yun-markdown.min.css"><link rel="stylesheet" href="https://fastly.jsdelivr.net/npm/prism-theme-vars/base.css"><script src="https://fastly.jsdelivr.net/npm/scrollreveal/dist/scrollreveal.min.js" defer></script><script>function initScrollReveal() {
+  [".post-card",".markdown-body img"].forEach((target)=> {
+    ScrollReveal().reveal(target);
+  })
+}
+document.addEventListener("DOMContentLoaded", initScrollReveal);
+document.addEventListener("pjax:success", initScrollReveal);
+</script><link rel="icon" type="image/svg+xml" href="/yun.svg"><link rel="mask-icon" href="/yun.svg" color="#8E71C1"><link rel="preload" href="/css/hexo-theme-yun.css" as="style"><link rel="prefetch" href="/js/sidebar.js" as="script"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><link rel="preconnect" href="https://fastly.jsdelivr.net/npm/" crossorigin><script id="yun-config">
+    window.Yun = {}
+    window.CONFIG = {"hostname":"xungameworld.vercel.app","root":"/","title":"浔浔的小窝","version":"1.10.11","mode":"auto","copycode":true,"page":{"isPost":false},"i18n":{"placeholder":"搜索...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）"},"anonymous_image":"https://cdn.yunyoujun.cn/img/avatar/none.jpg","say":{"api":"https://v1.hitokoto.cn","hitokoto":true},"vendors":{"host":"https://fastly.jsdelivr.net/npm/","darken":"https://fastly.jsdelivr.net/npm/darken@1.5.0"}};
+  </script><link rel="stylesheet" href="/css/hexo-theme-yun.css"><script src="/js/hexo-theme-yun.js" type="module"></script><meta name="description" content="PBR就是基于物理的渲染，一套基于物理公式的渲染流程。其实就是在模拟现实中光如何运动。这里我主要是在复刻BRDF流程 最终物体体现出来的颜色就是物体所反射出来的光的颜色，主源包括 &#x3D;&#x3D;主光源&#x3D;&#x3D; 和 &#x3D;&#x3D;环境光&#x3D;&#x3D;  两个光源的作用主光源：物体产生高光和进行阴影投射环境光：照亮暗部 防止死黑（对金属尤为重要）  BRD">
+<meta property="og:type" content="website">
+<meta property="og:title" content="MyWebsite">
+<meta property="og:url" content="https://xungameworld.vercel.app/images/ComputerScience/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9B%BE%E5%BD%A2%E5%AD%A6/PBR%E6%B5%81%E7%A8%8B.html">
+<meta property="og:site_name" content="MyWebsite">
+<meta property="og:description" content="PBR就是基于物理的渲染，一套基于物理公式的渲染流程。其实就是在模拟现实中光如何运动。这里我主要是在复刻BRDF流程 最终物体体现出来的颜色就是物体所反射出来的光的颜色，主源包括 &#x3D;&#x3D;主光源&#x3D;&#x3D; 和 &#x3D;&#x3D;环境光&#x3D;&#x3D;  两个光源的作用主光源：物体产生高光和进行阴影投射环境光：照亮暗部 防止死黑（对金属尤为重要）  BRD">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-03-02T23:01:13.114Z">
+<meta property="article:modified_time" content="2026-03-02T23:01:13.114Z">
+<meta property="article:author" content="浔浔">
+<meta name="twitter:card" content="summary"><script>(function() {
+  if (CONFIG.mode !== 'auto') return
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+  const setting = localStorage.getItem('darken-mode') || 'auto'
+  if (setting === 'dark' || (prefersDark && setting !== 'light'))
+    document.documentElement.classList.toggle('dark', true)
+})()</script></head><body><script src="https://code.iconify.design/2/2.1.1/iconify.min.js"></script><script>// Define global variable
+IconifyProviders = {
+  // Empty prefix: overwrite default API provider configuration
+  '': {
+    // Use custom API first, use Iconify public API as backup
+    resources: [
+        'https://api.iconify.design',
+    ],
+    // Wait for 1 second before switching API hosts
+    rotate: 1000,
+  },
+};</script><div class="container"><a class="sidebar-toggle hty-icon-button" id="menu-btn"><div class="hamburger hamburger--spin" type="button"><span class="hamburger-box"><span class="hamburger-inner"></span></span></div></a><div class="sidebar-toggle sidebar-overlay"></div><aside class="sidebar"><script src="/js/sidebar.js" type="module"></script><div class="sidebar-panel sidebar-panel-active" id="site-overview-wrap"><div class="site-info"><a class="site-author-avatar" href="/about/" title="浔浔"><img width="96" loading="lazy" src="/images/avatar.jpg" alt="浔浔"><span class="site-author-status" title="Looking for dawn.">🌑</span></a><div class="site-author-name"><a href="/about/">浔浔</a></div><span class="site-name">MyWebsite</span><sub class="site-subtitle">正在寻找黎明</sub><div class="site-description"></div></div><nav class="site-state"><a class="site-state-item hty-icon-button icon-home" href="/" title="首页"><span class="site-state-item-icon"><span class="icon iconify" data-icon="ri:home-4-line"></span></span></a><div class="site-state-item"><a href="/archives/" title="归档"><span class="site-state-item-icon"><span class="icon iconify" data-icon="ri:archive-line"></span></span><span class="site-state-item-count">25</span></a></div><div class="site-state-item"><a href="/categories/" title="分类"><span class="site-state-item-icon"><span class="icon iconify" data-icon="ri:folder-2-line"></span></span><span class="site-state-item-count">9</span></a></div><div class="site-state-item"><a href="/tags/" title="标签"><span class="site-state-item-icon"><span class="icon iconify" data-icon="ri:price-tag-3-line"></span></span><span class="site-state-item-count">19</span></a></div><a class="site-state-item hty-icon-button" target="_blank" rel="noopener" href="https://yun.yunyoujun.cn" title="文档"><span class="site-state-item-icon"><span class="icon iconify" data-icon="ri:settings-line"></span></span></a></nav><hr style="margin-bottom:0.5rem"><div class="links-of-author"><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://github.com/SUN-SisterLover" title="GitHub" target="_blank" style="color:#6e5494"><span class="icon iconify" data-icon="ri:github-line"></span></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://music.163.com/#/user/home?id=2122884825" title="网易云音乐" target="_blank" style="color:#C20C0C"><span class="icon iconify" data-icon="ri:netease-cloud-music-line"></span></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://space.bilibili.com/474274167" title="哔哩哔哩" target="_blank" style="color:#FF8EB3"><span class="icon iconify" data-icon="ri:bilibili-line"></span></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="3528705002@qq.com" title="E-Mail" target="_blank" style="color:#8E71C1"><span class="icon iconify" data-icon="ri:mail-line"></span></a></div><hr style="margin:0.5rem 1rem"><div class="links"><a class="links-item hty-icon-button" href="/links/" title="友情链接" style="color:dodgerblue"><span class="icon iconify" data-icon="ri:links-line"></span></a></div><br><a class="links-item hty-icon-button" id="toggle-mode-btn" href="javascript:;" title="Mode" style="color: #f1cb64"><span class="icon iconify" data-icon="ri:contrast-2-line"></span></a></div></aside><main class="sidebar-translate" id="content"><div class="hty-card" id="page"><header class="post-header"><h1 class="post-title" itemprop="name headline"></h1></header><div class="text-center"><div class="post-meta"><div class="post-time"><span class="post-meta-item-icon"><span class="icon iconify" data-icon="ri:calendar-line"></span></span> <time title="创建时间：2026-03-03 07:01:13" itemprop="dateCreated datePublished" datetime="2026-03-03T07:01:13+08:00">2026-03-03</time></div></div></div><article id="page"><section class="post-body" itemprop="articleBody"><div class="post-content markdown-body"><p>PBR就是基于物理的渲染，一套基于物理公式的渲染流程。其实就是在模拟现实中光如何运动。这里我主要是在复刻BRDF流程</p>
+<p>最终物体体现出来的颜色就是物体所反射出来的光的颜色，主源包括 &#x3D;&#x3D;主光源&#x3D;&#x3D; 和 &#x3D;&#x3D;环境光&#x3D;&#x3D;</p>
+<blockquote>
+<p>两个光源的作用<br>主光源：物体产生高光和进行阴影投射<br>环境光：照亮暗部 防止死黑（对金属尤为重要）</p>
+</blockquote>
+<h1 id="BRDF（双向反射分布函数）概述"><a href="#BRDF（双向反射分布函数）概述" class="headerlink" title="BRDF（双向反射分布函数）概述"></a>BRDF（双向反射分布函数）概述</h1><p>$$<br>f_r(\mathbf{l},\mathbf{v}) &#x3D; K_d , f_d(\mathbf{l},\mathbf{v}) + K_s , f_s(\mathbf{l},\mathbf{v})<br>$$</p>
+<p>$$<br>L_o &#x3D;<br>\int_{\Omega^+}<br>\left(<br>K_d \frac{c_d}{\pi}<br>+<br>K_s \frac{D F G}{4(\mathbf{n}\cdot\mathbf{l})(\mathbf{n}\cdot\mathbf{v})}<br>\right)<br>L_i(\mathbf{l})(\mathbf{n}\cdot\mathbf{l}) , d\omega<br>$$</p>
+<p>描述的是 光从光源打到物体表面再到眼睛的映射过程</p>
+<p>BRDF主要分为两个部分 &#x3D;&#x3D;漫反射&#x3D;&#x3D; 和 &#x3D;&#x3D;镜面反射&#x3D;&#x3D; 主要遵循两个重要理论 &#x3D;&#x3D;微表面理论&#x3D;&#x3D; 和 &#x3D;&#x3D;能量守恒&#x3D;&#x3D;</p>
+<p>公式中我们可以看到主要是有两项，我们用Kd项和Ks项代称，Kd项是漫反射项，Ks项是镜面反射项。这两个参数是漫反射参数和镜面反射参数，他们两就是在描述能量的分配 $K_d + K_s \le 1$</p>
+<p>这个公式的输入有<br>l：光照方向<br>v：视线方向<br>h：半角方向(l + v)</p>
+<blockquote>
+<p>两个反射</p>
+<ul>
+<li>漫反射：描述的是物体光打到物体表面进入物体内部再出来的部分</li>
+<li>镜面反射：描述的是光打在物体表面从物体直接反射出去的部分</li>
+</ul>
+</blockquote>
+<blockquote>
+<p>两个理论</p>
+<ul>
+<li>微表面理论：描述的是物体的粗糙度 一个非常微观的概念。其实就是高中物理中描述摩擦力的粗糙度。举个例子，一个像素，在游戏中是及其小的单元了吧，但其实一个像素中有着成千上万的法线去描述这块面积的粗糙度。当然实际计算并不会真正的使用这些法线，而是通过统计学的规律去计算</li>
+<li>能量守恒：描述的其实主要是亮度，一束光到达眼睛的亮度不会高于它射出的亮度。其实就是在说光在到眼睛的路上进行了能量分配，分配给了漫反射和镜面反射（当然也有一些打到了别的物体上不进入眼睛）</li>
+</ul>
+</blockquote>
+<p>接下来会一一介绍光在进入眼睛时会走过哪些路并影响它的分配</p>
+<h1 id="物体材质"><a href="#物体材质" class="headerlink" title="物体材质"></a>物体材质</h1><p>物体材质是是物体本身的性质，当光打到物体上的时候，物体材质会决定能量怎么分配，哪些光进入物体哪些反射出去。而描述物体材质的参数就是F0（垂直入射时的菲涅尔反射率）。而引擎中，物体最低的F0是0.04</p>
+<blockquote>
+<p>F0：由物体材质决定的，同时会影响菲涅尔参数。</p>
+</blockquote>
+<h1 id="菲涅尔项（F项）"><a href="#菲涅尔项（F项）" class="headerlink" title="菲涅尔项（F项）"></a>菲涅尔项（F项）</h1><p>$$<br>F(\mathbf{v},\mathbf{h}) &#x3D;<br>F_0 + (1 - F_0)(1 - \mathbf{v}\cdot\mathbf{h})^5<br>$$</p>
+<pre class="line-numbers language-HLSL" data-language="HLSL"><code class="language-HLSL">float3 FresnelSchlick(float cosTheta, float3 F0)  
+&#123;  
+    return F0 + (1 - F0) * pow(max(0.0, 1.0 - cosTheta), 5.0);  
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>菲涅尔效应讲的是光打到物体表面会因为角度不同而影响光进入或反射出物体的比例。比如当光以相对法线90度入射（掠射角）的时候，亮度就全以反射的形式出去了（严格来说不是，但我们考虑极限情况来这么理解）</p>
+<p>这里有一个非常关键的东西就是 菲涅尔参数在工程上一般就是我们的 Ks 原因在于菲涅尔参数就是在描述反射率</p>
+<p>所以有</p>
+<pre class="line-numbers language-HLSL" data-language="HLSL"><code class="language-HLSL">float3 kS &#x3D; F;  
+float3 kD &#x3D; (1.0 - kS) * (1.0 - metallic.r);&#x2F;&#x2F;金属度贴图的r通道存的就是金属度<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<h1 id="几何项-G项"><a href="#几何项-G项" class="headerlink" title="几何项 (G项)"></a>几何项 (G项)</h1><p>$$<br>G(l,v) &#x3D; G(l),G(v)<br>$$</p>
+<p>$$<br>k &#x3D; \frac{(r + 1)^2}{8}<br>$$</p>
+<p>$$<br>G(x) &#x3D;<br>\frac{n \cdot x}{<br>(n \cdot x)(1 - k) + k<br>}<br>$$</p>
+<pre class="line-numbers language-HLSL" data-language="HLSL"><code class="language-HLSL">float GeometrySchlickGGX(float cosTheta, float k)  
+&#123;  
+    float nom &#x3D; cosTheta;  
+    float denom &#x3D; cosTheta * (1.0 - k) + k;  
+    return nom &#x2F; max(denom, 0.00001);  
+&#125;  
+  
+float GeometrySmith(float NdotV, float NdotL, float roughness)  
+&#123;  
+    float r &#x3D; (roughness + 1.0);  
+    float k &#x3D; (r * r) &#x2F; 8.0;
+    float ggx2 &#x3D; GeometrySchlickGGX(NdotV, k);  
+    float ggx1 &#x3D; GeometrySchlickGGX(NdotL, k);  
+  
+    return ggx1 * ggx2;  
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>几何项就是微表面理论的体现，它描述的是物体表面的微小疙瘩对光线的遮挡，当光入射的时候，光会被这些微小疙瘩遮挡即$G(l)$，出射时也会被遮挡即$G(v)$，所以这一项就是在描述遮挡程度的(通过统计学公式)</p>
+<h1 id="法线分布项-（D项）"><a href="#法线分布项-（D项）" class="headerlink" title="法线分布项 （D项）"></a>法线分布项 （D项）</h1><p>$$<br>\alpha &#x3D; roughness^2<br>$$</p>
+<p>$$<br>D_{GGX} &#x3D;<br>\frac{\alpha^2}<br>{<br>\pi\left[(\mathbf{n}\cdot\mathbf{h})^2(\alpha^2 - 1) + 1\right]^2<br>}<br>$$</p>
+<pre class="line-numbers language-HLSL" data-language="HLSL"><code class="language-HLSL">float DistributionGGX(float NdotH, float roughness)  
+&#123;  
+    float a &#x3D; roughness * roughness;  
+    float a2 &#x3D; a * a;  
+    float d &#x3D; (NdotH * NdotH) * (a2 - 1.0) + 1.0;      
+    float denom &#x3D; PI * d * d;  
+  
+    return a2 &#x2F; max(denom, 0.00001);  
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>我们知道当一束光射入的时候，会有一个固定的出射角，当沿着这个出射角观察的时候，光的能量是最多的也就是最亮的（这是基础的Phong模型）。我们现在要理解我们的D项，它也是和入射角度相关，但我们现在要进入微观层面，一个像素有成千上万的微小表面，而当这个微小表面的光通过反射进入到我们眼中它就是亮的，否则就是暗的（暗不代表没有光，只是我们无法捕获），然后我们通过一个统计学公式可以计算在某个角度下，这个像素有多少微小表面的反射光能进入我们的眼睛，也就决定了它的亮度。</p>
+<blockquote>
+<p>PS：当粗糙度高的时候，高光更暗，高光更散（范围更广），我的理解是粗糙度干扰了法线分布，使原本的高亮法线的值变低，同时使一些本来不亮的法线进入到亮的行列（这是法线分布公式的实现，主要是基于统计学）</p>
+</blockquote>
+<h1 id="漫反射"><a href="#漫反射" class="headerlink" title="漫反射"></a>漫反射</h1><p>$$<br>f_d(\mathbf{l},\mathbf{v}) &#x3D; \frac{c_d}{\pi}<br>$$</p>
+<pre class="line-numbers language-HLSL" data-language="HLSL"><code class="language-HLSL">float3 directDiffuse &#x3D; albedo &#x2F; PI;<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>漫反射的理论比较简单，它说的是进入物体内部的光会在内部反射最后出来，最后表现为在物体表面均匀的散射出来</p>
+<h1 id="光照衰减"><a href="#光照衰减" class="headerlink" title="光照衰减"></a>光照衰减</h1><p>描述的是光在传播过程中会发生衰减，就是说光会随到物体的距离衰减</p>
+<h1 id="环境光"><a href="#环境光" class="headerlink" title="环境光"></a>环境光</h1><p>环境光采样这块，主要是一个概述<br>利用球谐函数计算环境光<br>然后利用视线方向求出反射方向 然后去采样<br>这是一个采样贴图的过程，而物体本身的粗糙度会影响反射的质量，所以通过粗糙度选择mip并以这个mip层去采样</p>
+<h1 id="LUT"><a href="#LUT" class="headerlink" title="LUT"></a>LUT</h1><p>还没看~</p>
+<h1 id="源码"><a href="#源码" class="headerlink" title="源码"></a>源码</h1><pre class="line-numbers language-HLSL" data-language="HLSL"><code class="language-HLSL">Shader &quot;Custom&#x2F;PBR&quot;
+&#123;
+    Properties
+    &#123;
+       [MainTexture] _AlbedoMap(&quot;Albedo Tex&quot;, 2D) &#x3D; &quot;white&quot;&#123;&#125;
+       [MainColor] _BaseColor(&quot;Base Color&quot;, Color) &#x3D; (1, 1, 1, 1)
+        
+       _NormalMap (&quot;Normal Map&quot;, 2D) &#x3D; &quot;bump&quot;&#123;&#125;
+       _NormalScale (&quot;Normal Scale&quot;, float) &#x3D; 1.0
+        
+       _MetallicGlossMap (&quot;Metallic&quot;, 2D) &#x3D; &quot;white&quot;&#123;&#125;
+       
+       _Smoothness (&quot;Smoothness&quot;, Range(0.0, 1)) &#x3D; 0.5
+        
+       _OcclusionMap (&quot;Occlusion&quot;, 2D) &#x3D; &quot;white&quot;&#123;&#125;
+        
+       [HDR] _EmissionColor(&quot;Emission Color&quot;, Color) &#x3D; (0, 0, 0)
+       _EmissionMap(&quot;Emission Map&quot;, 2D) &#x3D; &quot;white&quot;&#123;&#125;
+    &#125;
+
+    SubShader
+    &#123;
+        Tags &#123; &quot;RenderType&quot; &#x3D; &quot;Opaque&quot; &quot;RenderPipeline&quot; &#x3D; &quot;UniversalPipeline&quot;&#125;
+
+        Pass
+        &#123;
+            Name &quot;ForwardLit&quot;
+            Tags &#123;&quot;LightMode&quot; &#x3D; &quot;UniversalForward&quot;&#125;
+            
+            HLSLPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+
+            &#x2F;&#x2F; 宏定义
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
+            #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
+            #pragma multi_compile _ _SHADOWS_SOFT
+            
+            #include &quot;Packages&#x2F;com.unity.render-pipelines.universal&#x2F;ShaderLibrary&#x2F;Lighting.hlsl&quot;
+
+            CBUFFER_START(UnityPerMaterial)
+                float4 _BaseColor;
+                float _Smoothness;
+                float4 _EmissionColor;
+                float _NormalScale;
+            CBUFFER_END
+
+            TEXTURE2D(_AlbedoMap);     SAMPLER(sampler_AlbedoMap);
+            TEXTURE2D(_NormalMap);     SAMPLER(sampler_NormalMap);
+            TEXTURE2D(_MetallicGlossMap);     SAMPLER(sampler_MetallicGlossMap);
+            TEXTURE2D(_OcclusionMap);     SAMPLER(sampler_OcclusionMap);
+            TEXTURE2D(_EmissionMap);     SAMPLER(sampler_EmissionMap);
+
+            #define PI 3.14159265359
+            #define F_CONST float3(0.04, 0.04, 0.04)
+
+            struct Attributes
+            &#123;
+                float4 positionOS : POSITION;
+                float2 uv : TEXCOORD0;
+                float3 normalOS : NORMAL;
+                float4 tangentOS : TANGENT;
+            &#125;;
+
+            struct Varyings
+            &#123;
+                float4 positionCS : SV_POSITION;
+                float3 positionWS : TEXCOORD4;
+                float2 uv : TEXCOORD0;
+                float3 normalWS : TEXCOORD1;
+                float3 tangentWS : TEXCOORD2;
+                float3 bitangentWS : TEXCOORD3;
+            &#125;;
+            
+            Varyings vert(Attributes input)
+            &#123;
+                Varyings output &#x3D; (Varyings)0;
+                VertexPositionInputs vertexInput &#x3D; GetVertexPositionInputs(input.positionOS);
+                VertexNormalInputs normalInput &#x3D; GetVertexNormalInputs(input.normalOS, input.tangentOS);
+
+                output.positionCS &#x3D; vertexInput.positionCS;
+                output.positionWS &#x3D; vertexInput.positionWS;
+                output.normalWS &#x3D; normalInput.normalWS;
+                output.tangentWS &#x3D; normalInput.tangentWS;
+                output.bitangentWS &#x3D; normalInput.bitangentWS;
+
+                output.uv &#x3D; input.uv;
+                return output;
+            &#125;
+
+            float3 FresnelSchlick(float cosTheta, float3 F0)
+            &#123;
+                return F0 + (1 - F0) * pow(max(0.0, 1.0 - cosTheta), 5.0);
+            &#125;
+
+            &#x2F;&#x2F; --- GGX 分布函数 ---
+            float DistributionGGX(float NdotH, float roughness)
+            &#123;
+                float a &#x3D; roughness * roughness;
+                float a2 &#x3D; a * a;
+                
+                float d &#x3D; (NdotH * NdotH) * (a2 - 1.0) + 1.0;
+                float denom &#x3D; PI * d * d;
+
+                return a2 &#x2F; max(denom, 0.00001);
+            &#125;
+
+            float GeometrySchlickGGX(float cosTheta, float k)
+            &#123;
+                float nom &#x3D; cosTheta;
+                float denom &#x3D; cosTheta * (1.0 - k) + k;
+                return nom &#x2F; max(denom, 0.00001);
+            &#125;
+
+            float GeometrySmith(float NdotV, float NdotL, float roughness)
+            &#123;
+                float r &#x3D; (roughness + 1.0);
+                float k &#x3D; (r * r) &#x2F; 8.0; &#x2F;&#x2F; 直接光照的 k 值计算
+                float ggx2 &#x3D; GeometrySchlickGGX(NdotV, k);
+                float ggx1 &#x3D; GeometrySchlickGGX(NdotL, k);
+
+                return ggx1 * ggx2;
+            &#125;
+            
+            half4 frag(Varyings input) : SV_Target
+            &#123;
+                &#x2F;&#x2F; 1. 获取阴影坐标
+                float4 shadowCoord &#x3D; TransformWorldToShadowCoord(input.positionWS);
+                
+                &#x2F;&#x2F; 2. 获取主光源（包含阴影衰减）
+                Light light &#x3D; GetMainLight(shadowCoord);
+                
+                float3 L &#x3D; normalize(light.direction);
+                float3 V &#x3D; normalize(GetCameraPositionWS() - input.positionWS);
+                float3 H &#x3D; normalize(L + V);
+                
+                float3x3 TBN &#x3D; float3x3(normalize(input.tangentWS), normalize(input.bitangentWS), normalize(input.normalWS));
+                float roughness &#x3D; 1.0 - _Smoothness;
+                
+                &#x2F;&#x2F; 采样
+                float4 albedoSample &#x3D; SAMPLE_TEXTURE2D(_AlbedoMap, sampler_AlbedoMap, input.uv);
+                float3 albedo &#x3D; albedoSample.rgb * _BaseColor.rgb; &#x2F;&#x2F; 乘上 BaseColor
+                float3 emission &#x3D; SAMPLE_TEXTURE2D(_EmissionMap, sampler_EmissionMap, input.uv).rgb;
+                float3 occlusion &#x3D; SAMPLE_TEXTURE2D(_OcclusionMap, sampler_OcclusionMap, input.uv).rgb;
+                float3 metallic  &#x3D; SAMPLE_TEXTURE2D(_MetallicGlossMap, sampler_MetallicGlossMap, input.uv).rgb;
+                
+                &#x2F;&#x2F; --- 修复点 2: 应用 Normal Scale ---
+                &#x2F;&#x2F; 使用 UnpackNormalScale 而不是 UnpackNormal
+                float3 normalTS &#x3D; UnpackNormalScale(SAMPLE_TEXTURE2D(_NormalMap, sampler_NormalMap, input.uv), _NormalScale);
+                float3 N &#x3D; normalize(mul(normalTS, TBN));
+
+                &#x2F;&#x2F; 角度计算
+                float NdotH &#x3D; saturate(dot(N, H));
+                float NdotL &#x3D; saturate(dot(N, L));
+                float NdotV &#x3D; saturate(dot(N, V)); &#x2F;&#x2F; 加上 max 保护防止除零通常更好，但 saturate 也行
+                float HdotV &#x3D; saturate(dot(H, V));
+                
+                &#x2F;&#x2F; ----- 直接光 -----
+                float3 directDiffuse &#x3D; albedo &#x2F; PI; 
+                
+                float3 F0 &#x3D; lerp(F_CONST, albedo, metallic.r);
+                float D &#x3D; DistributionGGX(NdotH, roughness);
+                float G &#x3D; GeometrySmith(NdotV, NdotL, roughness);
+                float3 F &#x3D; FresnelSchlick(HdotV, F0);
+                
+                float3 nominator &#x3D; D * G * F;
+                float denominator &#x3D; 4.0 * NdotV * NdotL;
+                float3 directSpecular &#x3D; nominator &#x2F; max(denominator, 0.00001);
+
+                float3 kS &#x3D; F;
+                float3 kD &#x3D; (1.0 - kS) * (1.0 - metallic.r);
+
+                &#x2F;&#x2F; 加上光照衰减 (light.distanceAttenuation * light.shadowAttenuation)
+                &#x2F;&#x2F; NdotL 必须乘进去，这是 Lambert 定律
+                float3 directColor &#x3D; (kD * directDiffuse + directSpecular) * light.color * NdotL * (light.distanceAttenuation * light.shadowAttenuation);
+                
+                &#x2F;&#x2F; ----- 环境光 (IBL) -----
+                float3 indirectDiffuse &#x3D; SampleSH(N); &#x2F;&#x2F; URP SampleSH 已经包含了光照强度
+                float3 reflectDir &#x3D; reflect(-V, N);
+                float mip &#x3D; PerceptualRoughnessToMipmapLevel(roughness);
+                float4 encodedIrradiance &#x3D; SAMPLE_TEXTURECUBE_LOD(unity_SpecCube0, samplerunity_SpecCube0, reflectDir, mip);
+                float3 indirectSpecular &#x3D; DecodeHDREnvironment(encodedIrradiance, unity_SpecCube0_HDR);&#x2F;&#x2F;解码 HDR
+                
+                indirectDiffuse *&#x3D; occlusion.r;
+                indirectSpecular *&#x3D; occlusion.r;
+                
+                &#x2F;&#x2F; IBL 的菲涅尔修正
+                float3 F_indirect &#x3D; FresnelSchlick(max(dot(N, V), 0.0), F0);
+                float3 indirectColor &#x3D; indirectDiffuse * kD * albedo + indirectSpecular * F_indirect; &#x2F;&#x2F; 这里通常不需要再乘 PI
+
+                &#x2F;&#x2F; Emission
+                float3 emissionColor &#x3D; emission * _EmissionColor.rgb;
+                
+                float3 finalColor &#x3D; directColor + indirectColor + emissionColor;
+                &#x2F;&#x2F;float3 finalColor &#x3D; directColor;
+                &#x2F;&#x2F;float3 finalColor &#x3D; indirectColor;
+                &#x2F;&#x2F;float3 finalColor &#x3D; directColor + indirectColor;
+                return float4(finalColor, 1.0);
+            &#125;
+	        ENDHLSL
+        &#125; 
+    &#125;
+&#125;
+
+    
+    
+    <span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+</div></section></article></div><div class="hty-card" id="comment"><div class="comment-tooltip text-center"><span>如果您有任何关于博客内容的相关讨论，欢迎前往 <a href="https://github.com/SUN-SisterLover/SUN-SisterLover.github.io/discussions" target="_blank">GitHub Discussions</a> 与我交流。</span><br></div></div></main><footer class="sidebar-translate" id="footer"><div class="copyright"><span>&copy; 2025 – 2026 </span><span class="with-love" id="animate" title="☀️"><span class="icon iconify" data-icon="ri:cloud-line"></span></span><span class="author"> 浔浔</span></div><div class="powered"><span>由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v8.1.1</span><span class="footer-separator">|</span><span>主题 - <a rel="noopener" href="https://github.com/YunYouJun/hexo-theme-yun" target="_blank"><span>Yun</span></a> v1.10.11</span></div></footer></div><a class="hty-icon-button" id="back-to-top" aria-label="back-to-top" href="#"><span class="icon iconify" data-icon="ri:arrow-up-s-line"></span><svg class="progress-circle-container" viewBox="0 0 100 100"><circle class="progress-circle" id="progressCircle" cx="50" cy="50" r="48" fill="none" stroke="#8E71C1" stroke-width="2" stroke-linecap="round"></circle></svg></a><script src="https://fastly.jsdelivr.net/npm/medium-zoom@1.0.6/dist/medium-zoom.min.js"></script><script>const images = [...document.querySelectorAll('.markdown-body img')]
+mediumZoom(images)</script><style>.medium-zoom-image {
+  z-index: 99;
+}</style></body></html>

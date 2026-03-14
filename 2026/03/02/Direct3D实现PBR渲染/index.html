@@ -1,0 +1,308 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#8E71C1"><meta name="author" content="浔浔"><meta name="copyright" content="浔浔"><meta name="generator" content="Hexo 8.1.1"><meta name="theme" content="hexo-theme-yun"><title>Direct3D实现PBR渲染 | MyWebsite</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@900&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://fastly.jsdelivr.net/npm/star-markdown-css@0.4.1/dist/yun/yun-markdown.min.css"><link rel="stylesheet" href="https://fastly.jsdelivr.net/npm/prism-theme-vars/base.css"><script src="https://fastly.jsdelivr.net/npm/scrollreveal/dist/scrollreveal.min.js" defer></script><script>function initScrollReveal() {
+  [".post-card",".markdown-body img"].forEach((target)=> {
+    ScrollReveal().reveal(target);
+  })
+}
+document.addEventListener("DOMContentLoaded", initScrollReveal);
+document.addEventListener("pjax:success", initScrollReveal);
+</script><link rel="icon" type="image/svg+xml" href="/yun.svg"><link rel="mask-icon" href="/yun.svg" color="#8E71C1"><link rel="preload" href="/css/hexo-theme-yun.css" as="style"><link rel="prefetch" href="/js/sidebar.js" as="script"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><link rel="preconnect" href="https://fastly.jsdelivr.net/npm/" crossorigin><script id="yun-config">
+    window.Yun = {}
+    window.CONFIG = {"hostname":"xungameworld.vercel.app","root":"/","title":"浔浔的小窝","version":"1.10.11","mode":"auto","copycode":true,"page":{"isPost":true},"i18n":{"placeholder":"搜索...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）"},"anonymous_image":"https://cdn.yunyoujun.cn/img/avatar/none.jpg","say":{"api":"https://v1.hitokoto.cn","hitokoto":true},"vendors":{"host":"https://fastly.jsdelivr.net/npm/","darken":"https://fastly.jsdelivr.net/npm/darken@1.5.0"}};
+  </script><link rel="stylesheet" href="/css/hexo-theme-yun.css"><script src="/js/hexo-theme-yun.js" type="module"></script><meta name="description" content="PBR介绍PBR可以让渲染的精度更高，使画面更加好看。有些简单的游戏中的颜色RGB，因为精度问题，一般都是8位，而PBR则是升级到了32位，从而使精度更高，这样就不用考虑因为精度问题导致曝光出了问题。 而这类渲染方式统称为HDR渲染。实现HDR要先创建一个FBO，他的数据精度会比普通的要高，还要做一个ToneMapping，用来将其转换为SDR（以后再补） 创建项目清空项目中不需要的附加文件（只保">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Direct3D实现PBR渲染">
+<meta property="og:url" content="https://xungameworld.vercel.app/2026/03/02/Direct3D%E5%AE%9E%E7%8E%B0PBR%E6%B8%B2%E6%9F%93/index.html">
+<meta property="og:site_name" content="MyWebsite">
+<meta property="og:description" content="PBR介绍PBR可以让渲染的精度更高，使画面更加好看。有些简单的游戏中的颜色RGB，因为精度问题，一般都是8位，而PBR则是升级到了32位，从而使精度更高，这样就不用考虑因为精度问题导致曝光出了问题。 而这类渲染方式统称为HDR渲染。实现HDR要先创建一个FBO，他的数据精度会比普通的要高，还要做一个ToneMapping，用来将其转换为SDR（以后再补） 创建项目清空项目中不需要的附加文件（只保">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://xungameworld.vercel.app/images/ComputerScience/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9B%BE%E5%BD%A2%E5%AD%A6/Pasted%20image%2020260302200532.png">
+<meta property="og:image" content="https://xungameworld.vercel.app/images/ComputerScience/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9B%BE%E5%BD%A2%E5%AD%A6/Pasted%20image%2020260303065050.png">
+<meta property="article:published_time" content="2026-03-02T08:32:11.000Z">
+<meta property="article:modified_time" content="2026-03-11T03:03:41.749Z">
+<meta property="article:author" content="浔浔">
+<meta property="article:tag" content="Direct3D">
+<meta property="article:tag" content="PBR">
+<meta property="article:tag" content="技术美术">
+<meta property="article:tag" content="渲染">
+<meta property="article:tag" content="计算机图形学">
+<meta property="article:tag" content="项目">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://xungameworld.vercel.app/images/ComputerScience/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9B%BE%E5%BD%A2%E5%AD%A6/Pasted%20image%2020260302200532.png"><script>(function() {
+  if (CONFIG.mode !== 'auto') return
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+  const setting = localStorage.getItem('darken-mode') || 'auto'
+  if (setting === 'dark' || (prefersDark && setting !== 'light'))
+    document.documentElement.classList.toggle('dark', true)
+})()</script></head><body><script src="https://code.iconify.design/2/2.1.1/iconify.min.js"></script><script>// Define global variable
+IconifyProviders = {
+  // Empty prefix: overwrite default API provider configuration
+  '': {
+    // Use custom API first, use Iconify public API as backup
+    resources: [
+        'https://api.iconify.design',
+    ],
+    // Wait for 1 second before switching API hosts
+    rotate: 1000,
+  },
+};</script><div class="container"><a class="sidebar-toggle hty-icon-button" id="menu-btn"><div class="hamburger hamburger--spin" type="button"><span class="hamburger-box"><span class="hamburger-inner"></span></span></div></a><div class="sidebar-toggle sidebar-overlay"></div><aside class="sidebar"><script src="/js/sidebar.js" type="module"></script><ul class="sidebar-nav"><li class="sidebar-nav-item sidebar-nav-toc hty-icon-button sidebar-nav-active" data-target="post-toc-wrap" title="文章目录"><span class="icon iconify" data-icon="ri:list-ordered"></span></li><li class="sidebar-nav-item sidebar-nav-overview hty-icon-button" data-target="site-overview-wrap" title="站点概览"><span class="icon iconify" data-icon="ri:passport-line"></span></li></ul><div class="sidebar-panel" id="site-overview-wrap"><div class="site-info fix-top"><a class="site-author-avatar" href="/about/" title="浔浔"><img width="96" loading="lazy" src="/images/avatar.jpg" alt="浔浔"><span class="site-author-status" title="Looking for dawn.">🌑</span></a><div class="site-author-name"><a href="/about/">浔浔</a></div><span class="site-name">MyWebsite</span><sub class="site-subtitle">正在寻找黎明</sub><div class="site-description"></div></div><nav class="site-state"><a class="site-state-item hty-icon-button icon-home" href="/" title="首页"><span class="site-state-item-icon"><span class="icon iconify" data-icon="ri:home-4-line"></span></span></a><div class="site-state-item"><a href="/archives/" title="归档"><span class="site-state-item-icon"><span class="icon iconify" data-icon="ri:archive-line"></span></span><span class="site-state-item-count">25</span></a></div><div class="site-state-item"><a href="/categories/" title="分类"><span class="site-state-item-icon"><span class="icon iconify" data-icon="ri:folder-2-line"></span></span><span class="site-state-item-count">9</span></a></div><div class="site-state-item"><a href="/tags/" title="标签"><span class="site-state-item-icon"><span class="icon iconify" data-icon="ri:price-tag-3-line"></span></span><span class="site-state-item-count">19</span></a></div><a class="site-state-item hty-icon-button" target="_blank" rel="noopener" href="https://yun.yunyoujun.cn" title="文档"><span class="site-state-item-icon"><span class="icon iconify" data-icon="ri:settings-line"></span></span></a></nav><hr style="margin-bottom:0.5rem"><div class="links-of-author"><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://github.com/SUN-SisterLover" title="GitHub" target="_blank" style="color:#6e5494"><span class="icon iconify" data-icon="ri:github-line"></span></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://music.163.com/#/user/home?id=2122884825" title="网易云音乐" target="_blank" style="color:#C20C0C"><span class="icon iconify" data-icon="ri:netease-cloud-music-line"></span></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://space.bilibili.com/474274167" title="哔哩哔哩" target="_blank" style="color:#FF8EB3"><span class="icon iconify" data-icon="ri:bilibili-line"></span></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="3528705002@qq.com" title="E-Mail" target="_blank" style="color:#8E71C1"><span class="icon iconify" data-icon="ri:mail-line"></span></a></div><hr style="margin:0.5rem 1rem"><div class="links"><a class="links-item hty-icon-button" href="/links/" title="友情链接" style="color:dodgerblue"><span class="icon iconify" data-icon="ri:links-line"></span></a></div><br><a class="links-item hty-icon-button" id="toggle-mode-btn" href="javascript:;" title="Mode" style="color: #f1cb64"><span class="icon iconify" data-icon="ri:contrast-2-line"></span></a></div><div class="sidebar-panel sidebar-panel-active" id="post-toc-wrap"><div class="post-toc"><div class="post-toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#PBR%E4%BB%8B%E7%BB%8D"><span class="toc-number">1.</span> <span class="toc-text">PBR介绍</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E9%A1%B9%E7%9B%AE"><span class="toc-number">1.1.</span> <span class="toc-text">创建项目</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%90%AD%E5%BB%BAHDR%E6%B8%B2%E6%9F%93%E7%AE%A1%E7%BA%BF"><span class="toc-number">2.</span> <span class="toc-text">搭建HDR渲染管线</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#PBR%E7%AE%97%E6%B3%95%E6%A1%86%E6%9E%B6%E6%90%AD%E5%BB%BA"><span class="toc-number">3.</span> <span class="toc-text">PBR算法框架搭建</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%BC%96%E5%86%99%E6%9D%90%E8%B4%A8%E7%90%83%E6%9C%89%E5%85%B3%E7%9A%84%E4%BB%A3%E7%A0%81%E6%90%AD%E5%BB%BA"><span class="toc-number">4.</span> <span class="toc-text">编写材质球有关的代码搭建</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%85%B3%E4%BA%8E%E8%B0%83%E8%AF%95"><span class="toc-number">5.</span> <span class="toc-text">关于调试</span></a></li></ol></div></div></div></aside><main class="sidebar-translate" id="content"><div id="post"><article class="hty-card post-block" itemscope itemtype="https://schema.org/Article" style="--smc-primary:#8E71C1;"><link itemprop="mainEntityOfPage" href="https://xungameworld.vercel.app/2026/03/02/Direct3D%E5%AE%9E%E7%8E%B0PBR%E6%B8%B2%E6%9F%93/"><span hidden itemprop="author" itemscope itemtype="https://schema.org/Person"><meta itemprop="name" content="浔浔"><meta itemprop="description"></span><span hidden itemprop="publisher" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="MyWebsite"></span><header class="post-header"><h1 class="post-title" itemprop="name headline">Direct3D实现PBR渲染</h1><div class="post-meta"><div class="post-time"><span class="post-meta-item-icon"><span class="icon iconify" data-icon="ri:calendar-line"></span></span> <time title="创建时间：2026-03-02 16:32:11" itemprop="dateCreated datePublished" datetime="2026-03-02T16:32:11+08:00">2026-03-02</time><span class="post-meta-divider">-</span><span class="post-meta-item-icon"><span class="icon iconify" data-icon="ri:calendar-2-line"></span></span> <time title="修改时间：2026-03-11 11:03:41" itemprop="dateModified" datetime="2026-03-11T11:03:41+08:00">2026-03-11</time></div><div class="post-classify"><span class="post-category"> <span class="post-meta-item-icon" style="margin-right:3px;"><span class="icon iconify" data-icon="ri:folder-line"></span></span><span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a class="category-item" href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9B%BE%E5%BD%A2%E5%AD%A6/" style="--text-color:var(--hty-text-color)" itemprop="url" rel="index"><span itemprop="text">计算机图形学</span></a></span></span><span class="post-tag"><span class="post-meta-divider">-</span><a class="tag-item" href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9B%BE%E5%BD%A2%E5%AD%A6/" style="--text-color:crimson"><span class="post-meta-item-icon"><span class="icon iconify" data-icon="ri:price-tag-3-line"></span></span><span class="tag-name">计算机图形学</span></a><a class="tag-item" href="/tags/%E6%B8%B2%E6%9F%93/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><span class="icon iconify" data-icon="ri:price-tag-3-line"></span></span><span class="tag-name">渲染</span></a><a class="tag-item" href="/tags/Direct3D/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><span class="icon iconify" data-icon="ri:price-tag-3-line"></span></span><span class="tag-name">Direct3D</span></a><a class="tag-item" href="/tags/%E9%A1%B9%E7%9B%AE/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><span class="icon iconify" data-icon="ri:price-tag-3-line"></span></span><span class="tag-name">项目</span></a><a class="tag-item" href="/tags/PBR/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><span class="icon iconify" data-icon="ri:price-tag-3-line"></span></span><span class="tag-name">PBR</span></a><a class="tag-item" href="/tags/%E6%8A%80%E6%9C%AF%E7%BE%8E%E6%9C%AF/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><span class="icon iconify" data-icon="ri:price-tag-3-line"></span></span><span class="tag-name">技术美术</span></a></span></div></div></header><section class="post-body" itemprop="articleBody"><div class="post-content markdown-body"><h1 id="PBR介绍"><a href="#PBR介绍" class="headerlink" title="PBR介绍"></a>PBR介绍</h1><p>PBR可以让渲染的精度更高，使画面更加好看。有些简单的游戏中的颜色RGB，因为精度问题，一般都是8位，而PBR则是升级到了32位，从而使精度更高，这样就不用考虑因为精度问题导致曝光出了问题。</p>
+<p>而这类渲染方式统称为HDR渲染。实现HDR要先创建一个FBO，他的数据精度会比普通的要高，还要做一个ToneMapping，用来将其转换为SDR（以后再补）</p>
+<h2 id="创建项目"><a href="#创建项目" class="headerlink" title="创建项目"></a>创建项目</h2><p><img src="/images/ComputerScience/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9B%BE%E5%BD%A2%E5%AD%A6/Pasted%20image%2020260302200532.png" loading="lazy"><br>清空项目中不需要的附加文件（只保留Codes.sln、Codes.vcxproj、Codes.vcxproj.filtes、Codes.vcxproj.user），导入FrameWork后（本课程只考虑PBR的实现，FrameWork后续在对其进行研究），即可开始，随后配置基本的渲染环境：<br><strong>Scene.h</strong></p>
+<pre class="line-numbers language-C++" data-language="C++"><code class="language-C++">#pragma once
+void InitScene(int intWidth, int inHeight);
+void RenderOneFrame(float inDeltaTime);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p><strong>Scene.cpp</strong></p>
+<pre class="line-numbers language-C++" data-language="C++"><code class="language-C++">#include &quot;Scene.h&quot;
+#include &quot;BattleFireDirect3D12.h&quot;
+
+void InitScene(int inWidth, int inHeight)
+&#123;
+
+&#125;
+
+void RenderOneFrame(float inDeltaTime)
+&#123;
+	RHICommandList rhiCommandList;
+	FrameBufferRT* rt &#x3D; BeginRenderFrame(rhiCommandList.mCommandList);
+
+	EndRenderFrame(rhiCommandList.mCommandList);
+
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p> <strong>代码拆解：</strong><br> <code>InitScene(int inWidth, int inHeight)</code>：是一个初始化占位符。在 DirectX 开发中，在这里创建与窗口大小相关的资源。</p>
+<p> <code>RenderOneFrame(float inDeltaTime)</code>：是渲染的核心逻辑，每一帧都会被调用（例如每秒 60 次）。</p>
+<p> <code>RHICommandList</code>：对<code>ID3D12GraphicsCommandList</code>的封装。构造函数会自动调用 <code>GetCommandList()</code>内部执行了 <code>Reset</code>），而析构函数则自动调用 <code>EndCommandList(1)</code>（内部执行了 <code>Close</code> 和 <code>Execute</code>）。原生的<code>ID3D12GraphicsCommandList</code>每一帧都必须要先Reset才能开始录制，必须先CLose才能提交，提交后必须处理同步。</p>
+<pre class="line-numbers language-C++" data-language="C++"><code class="language-C++"> struct RHICommandList &#123;
+	ID3D12GraphicsCommandList* mCommandList;
+	RHICommandList();
+	~RHICommandList();
+	ID3D12GraphicsCommandList* operator-&gt;() &#123;
+		return mCommandList;
+	&#125;
+&#125;;
+RHICommandList::RHICommandList() &#123;
+	mCommandList &#x3D; GetCommandList();
+&#125;
+RHICommandList::~RHICommandList() &#123;
+	EndCommandList(1);
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>运行后结果：</strong><br><img src="/images/ComputerScience/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9B%BE%E5%BD%A2%E5%AD%A6/Pasted%20image%2020260303065050.png" loading="lazy"></p>
+<h1 id="搭建HDR渲染管线"><a href="#搭建HDR渲染管线" class="headerlink" title="搭建HDR渲染管线"></a>搭建HDR渲染管线</h1><p>在显示器（LDR，低动态范围）的世界里，颜色值只能是 $0.0$（纯黑）到 $1.0$（纯白）。</p>
+<p>在物理世界中，光照强度是没有上限的（太阳的亮度远高于白纸）。传统的 8 位颜色空间（0-255）无法表现这种跨度。因此，我们需要一个“高动态范围”的缓冲区来存储计算结果，最后再通过 <strong>Tone Mapping（色调映射）</strong> 压缩回显示器能显示的范围。</p>
+<p><strong>HDR 渲染管线必须具备的两个要素：</strong></p>
+<ol>
+<li><p><strong>高精度缓冲区（Floating Point Buffer）：</strong> 能够存储大于 $1.0$ 数值的“容器”。</p>
+</li>
+<li><p><strong>色调映射（Tone Mapping）：</strong> 在最后一步，把这些巨大的数值智能地压缩回 $[0.0, 1.0]$，让显示器能正常显示。</p>
+</li>
+</ol>
+<p><strong>Scene.cpp</strong></p>
+<pre class="line-numbers language-C++" data-language="C++"><code class="language-C++">#include &quot;Scene.h&quot;
+#include &quot;BattleFireDirect3D12.h&quot;
+#include &quot;FrameBuffer.h&quot;
+
+FrameBuffer* gHDRFBO &#x3D; nullptr;
+
+void InitScene(int inWidth, int inHeight)
+&#123;
+	gHDRFBO &#x3D; new FrameBuffer;
+	gHDRFBO-&gt;SetSize(inWidth, inHeight);
+	gHDRFBO-&gt;AttachColorBuffer(DXGI_FORMAT_R32G32B32A32_FLOAT);
+	gHDRFBO-&gt;AttachDepthBuffer();
+&#125;
+
+void RenderOneFrame(float inDeltaTime)
+&#123;
+	&#x2F;&#x2F;ldr
+	RHICommandList rhiCommandList;
+	&#x2F;&#x2F;draw skybox
+	&#x2F;&#x2F;draw material sphere
+	FrameBufferRT* rt &#x3D; gHDRFBO-&gt;BeginRendering(rhiCommandList.mCommandList);
+	delete rt;
+	rt &#x3D; BeginRenderFrame(rhiCommandList.mCommandList);
+	&#x2F;&#x2F;tone mapping, hdr -&gt; swapchain
+	EndRenderFrame(rhiCommandList.mCommandList);
+	delete rt;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p> <strong>代码拆解：</strong><br> 在<code>InitScene</code>中新建了一个HDR的FBO（帧缓冲对象），相当于一个离线的画布，我们将在FBO中做好所有的设置之后再将其渲染。绑定画布的尺寸、在显存中开辟一块空间并且使用R32G32B32A32_FLOAT，并且给予其深度支持。</p>
+<p> <code>FrameBufferRT* rt = gHDRFBO-&gt;BeginRendering(rhiCommandList.mCommandList);</code>：将画布绑定在当前的HDR上。</p>
+<pre class="line-numbers language-C++" data-language="C++"><code class="language-C++"> struct FrameBufferRT &#123;
+	Texture mColorBuffer;
+	Texture mDSBuffer;
+&#125;;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>该结构体把当前那一帧<strong>正在被使用</strong>的资源（Resource）及其对应的描述符（RTV&#x2F;DSV）打包在一起。这样，只需要通过这个 <code>rt</code> 指针，就能立刻获取到 GPU 绘图所需要的东西。<br>本部分源码量过多，直接放在程序中进行注释讲解！</p>
+<pre class="line-numbers language-C++" data-language="C++"><code class="language-C++">FrameBufferRT* FrameBuffer::BeginRendering(ID3D12GraphicsCommandList* inCommandList&#x2F;* &#x3D;nullptr *&#x2F;) &#123;
+	&#x2F;&#x2F; GPU是高度并行的，在上一帧，HDR 纹理可能作为只读贴图被采样。现在要往里写东西，必须告诉其暂停，并且把这块内存从读状态切换到写状态。
+	D3D12_RESOURCE_BARRIER berrierCRT &#x3D; InitResourceBarrier(mColorBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	inCommandList-&gt;ResourceBarrier(1, &amp;berrierCRT);
+	D3D12_RESOURCE_BARRIER berrierDSRT &#x3D; InitResourceBarrier(mDSBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+	inCommandList-&gt;ResourceBarrier(1, &amp;berrierDSRT);
+	FrameBufferRT* frameBufferRT &#x3D; new FrameBufferRT;
+	frameBufferRT-&gt;mColorBuffer.mDescriptorHeap &#x3D; mRTVDescriptorHeap;
+	frameBufferRT-&gt;mColorBuffer.mFormat &#x3D; mFormat;
+	frameBufferRT-&gt;mColorBuffer.mResource &#x3D; mColorBuffer;
+	frameBufferRT-&gt;mColorBuffer.mRTV &#x3D; mRTVDescriptorHeap-&gt;GetCPUDescriptorHandleForHeapStart();
+	frameBufferRT-&gt;mDSBuffer.mDescriptorHeap &#x3D; mDSVDescriptorHeap;
+	frameBufferRT-&gt;mDSBuffer.mFormat &#x3D; DXGI_FORMAT_R24G8_TYPELESS;
+	frameBufferRT-&gt;mDSBuffer.mResource &#x3D; mDSBuffer;
+	frameBufferRT-&gt;mDSBuffer.mRTV &#x3D; mDSVDescriptorHeap-&gt;GetCPUDescriptorHandleForHeapStart();
+	&#x2F;&#x2F; OM，这是渲染管线的最后一步，进行测试混合之类的
+	inCommandList-&gt;OMSetRenderTargets(1, &amp;frameBufferRT-&gt;mColorBuffer.mRTV, FALSE, &amp;frameBufferRT-&gt;mDSBuffer.mRTV);
+	&#x2F;&#x2F; 定义一套缩放比例，用于投影渲染，以及裁剪等
+	D3D12_VIEWPORT viewport &#x3D; &#123; 0.0f,0.0f,float(mWidth),float(mHeight),0.0f,1.0f &#125;;
+	D3D12_RECT scissorRect &#x3D; &#123; 0,0,mWidth,mHeight &#125;;
+	inCommandList-&gt;RSSetViewports(1, &amp;viewport);
+	inCommandList-&gt;RSSetScissorRects(1, &amp;scissorRect);
+	&#x2F;&#x2F; 清理显存
+	const float hdrClearColor[] &#x3D; &#123; 0.0f, 0.0f, 0.0f, 0.0f &#125;;
+	inCommandList-&gt;ClearRenderTargetView(frameBufferRT-&gt;mColorBuffer.mRTV, hdrClearColor, 0, nullptr);
+	inCommandList-&gt;ClearDepthStencilView(frameBufferRT-&gt;mDSBuffer.mRTV, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+	return frameBufferRT;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+<p><code>rt = BeginRenderFrame(rhiCommandList.mCommandList);</code>：HDR渲染管线的最终出口的准备，用来在电脑屏幕（LDR交换链）进行绘画。<br>本部分源码量过多，直接放在程序中进行注释讲解！</p>
+<pre class="line-numbers language-C++" data-language="C++"><code class="language-C++">FrameBufferRT* BeginRenderFrame(ID3D12GraphicsCommandList* inCommandList) &#123;
+	&#x2F;&#x2F; 切换状态：把屏幕缓冲（sRenderTargets）从“显示状态”变成“可写状态”
+	D3D12_RESOURCE_BARRIER barrier0 &#x3D; InitResourceBarrier(sRenderTargets[sCurrentFrameIndex], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	inCommandList-&gt;ResourceBarrier(1, &amp;barrier0);
+	FrameBufferRT* frameBuffer &#x3D; new FrameBufferRT;
+	frameBuffer-&gt;mColorBuffer.mDescriptorHeap &#x3D; sRTVDescriptorHeap;
+	&#x2F;&#x2F; 算地址：屏幕往往有2张图（前台&#x2F;后台），根据 sCurrentFrameIndex 算出此时该画哪一张。这就是为什么它有一行复杂的加法偏移计算，而 HDR FBO 不需要
+	frameBuffer-&gt;mColorBuffer.mRTV.ptr &#x3D; frameBuffer-&gt;mColorBuffer.mDescriptorHeap-&gt;GetCPUDescriptorHandleForHeapStart().ptr + sCurrentFrameIndex * GetDirect3DDevice()-&gt;GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	&#x2F;&#x2F; 定格式：这里的格式是 sColorRTFormat (通常是 R8G8B8A8)，也就是普通屏幕格式
+	frameBuffer-&gt;mColorBuffer.mFormat &#x3D; sColorRTFormat;
+	frameBuffer-&gt;mDSBuffer.mDescriptorHeap &#x3D; sDSDescriptorHeap;
+	frameBuffer-&gt;mDSBuffer.mRTV &#x3D; frameBuffer-&gt;mDSBuffer.mDescriptorHeap-&gt;GetCPUDescriptorHandleForHeapStart();
+	frameBuffer-&gt;mDSBuffer.mFormat &#x3D; sDSRTFormat;
+	&#x2F;&#x2F; 挂载：告诉 GPU，现在的输出口是【屏幕】
+	inCommandList-&gt;OMSetRenderTargets(1, &amp;frameBuffer-&gt;mColorBuffer.mRTV, FALSE, &amp;frameBuffer-&gt;mDSBuffer.mRTV);
+	D3D12_VIEWPORT viewport &#x3D; &#123; 0.0f,0.0f,float(sViewportWidth),float(sViewportHeight),0.0f,1.0f &#125;;
+	D3D12_RECT scissorRect &#x3D; &#123; 0,0,sViewportWidth,sViewportHeight &#125;;
+	inCommandList-&gt;RSSetViewports(1, &amp;viewport);
+	inCommandList-&gt;RSSetScissorRects(1, &amp;scissorRect);
+	const float clearColor[] &#x3D; &#123; 0.1f, 0.4f, 0.6f, 1.0f &#125;;
+	&#x2F;&#x2F; 刷色：这里把屏幕刷成了“天蓝色” &#123; 0.1f, 0.4f, 0.6f, 1.0f &#125;
+	inCommandList-&gt;ClearRenderTargetView(frameBuffer-&gt;mColorBuffer.mRTV, clearColor, 0, nullptr);
+	inCommandList-&gt;ClearDepthStencilView(frameBuffer-&gt;mDSBuffer.mRTV, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+	return frameBuffer;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><code>EndRenderFrame(rhiCommandList.mCommandList);</code>：同一块显存在不同的时刻不一样，<strong>渲染时</strong>：它的状态必须是 <code>RENDER_TARGET</code>（渲染目标），<strong>显示时</strong>：它的状态必须是 <code>PRESENT</code>（展示）。这行代码本质上是在给 GPU 发送一条<strong>同步指令</strong>，告诉GPU针对这张图的写操作必须在这里全部结束，如果没有该指令就可能导致显示器只拿到一部分像素，从而产生画面撕裂。</p>
+<pre class="line-numbers language-C++" data-language="C++"><code class="language-C++">void EndRenderFrame(ID3D12GraphicsCommandList* inCmdList) &#123;
+	D3D12_RESOURCE_BARRIER frameEndBerrier &#x3D; InitResourceBarrier(sRenderTargets[sCurrentFrameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+	inCmdList-&gt;ResourceBarrier(1, &amp;frameEndBerrier);
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h1 id="PBR算法框架搭建"><a href="#PBR算法框架搭建" class="headerlink" title="PBR算法框架搭建"></a>PBR算法框架搭建</h1><p>本部分搭建一个用于编写PBR的基本算法框架，并没有写具体的渲染公式，只是框架。<br>创建两个hlsl文件（一个也可以，主要看怎么去写）<br><strong>pbr_vs.hlsl</strong>：顶点着色器(Vertex Shader - 几何阶段)</p>
+<pre class="line-numbers language-hlsl" data-language="hlsl"><code class="language-hlsl"><span class="token keyword">struct</span> <span class="token class-name">VertexData</span><span class="token punctuation">&#123;</span>
+    <span class="token keyword">float4</span> position<span class="token operator">:</span>POSITION<span class="token punctuation">;</span>
+    <span class="token keyword">float4</span> texcoord<span class="token operator">:</span>TEXCOORD0<span class="token punctuation">;</span>
+    <span class="token keyword">float4</span> normal<span class="token operator">:</span>NORMAL<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token keyword">struct</span> <span class="token class-name">VertexOutput</span><span class="token punctuation">&#123;</span>
+    <span class="token keyword">float4</span> position<span class="token operator">:</span>SV_POSITION<span class="token punctuation">;</span>
+    <span class="token keyword">float4</span> texcoord<span class="token operator">:</span>TEXCOORD0<span class="token punctuation">;</span>
+    <span class="token keyword">float4</span> normal<span class="token operator">:</span>NORMAL<span class="token punctuation">;</span>
+    <span class="token keyword">float4</span> positionWS<span class="token operator">:</span>TEXCOORD1<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token keyword">cbuffer</span> X<span class="token operator">:</span><span class="token keyword">register</span><span class="token punctuation">(</span>b0<span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+    <span class="token keyword">float4x4</span> ProjectionMatrix<span class="token punctuation">;</span>
+    <span class="token keyword">float4x4</span> ViewMatrix<span class="token punctuation">;</span>
+    <span class="token keyword">float4x4</span> ModelMatrix<span class="token punctuation">;</span>
+    <span class="token keyword">float4x4</span> ITModelMatrix<span class="token punctuation">;</span>
+    <span class="token keyword">float4x4</span> Reserverd<span class="token punctuation">[</span><span class="token number">1020</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+VertexOutput <span class="token function">main</span><span class="token punctuation">(</span>VertexData inVertexData<span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+    VertexOutput o<span class="token punctuation">;</span>
+    <span class="token keyword">float4</span> positionWS<span class="token operator">=</span><span class="token function">mul</span><span class="token punctuation">(</span>ModelMatrix<span class="token punctuation">,</span> <span class="token keyword">float4</span><span class="token punctuation">(</span>inVertexData<span class="token punctuation">.</span>position<span class="token punctuation">.</span>xyz<span class="token punctuation">,</span><span class="token number">1.0f</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">float4</span> positionVS<span class="token operator">=</span><span class="token function">mul</span><span class="token punctuation">(</span>ViewMatrix<span class="token punctuation">,</span>positionWS<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">float4</span> positionCS<span class="token operator">=</span><span class="token function">mul</span><span class="token punctuation">(</span>ProjectionMatrix<span class="token punctuation">,</span>positionVS<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">float3</span> normalWS<span class="token operator">=</span><span class="token function">mul</span><span class="token punctuation">(</span>ITModelMatrix<span class="token punctuation">,</span><span class="token keyword">float4</span><span class="token punctuation">(</span>inVertexData<span class="token punctuation">.</span>normal<span class="token punctuation">.</span>xyz<span class="token punctuation">,</span><span class="token number">0.0f</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    o<span class="token punctuation">.</span>position<span class="token operator">=</span>positionCS<span class="token punctuation">;</span>
+    o<span class="token punctuation">.</span>texcoord<span class="token operator">=</span>inVertexData<span class="token punctuation">.</span>texcoord<span class="token punctuation">;</span>
+    o<span class="token punctuation">.</span>normal<span class="token operator">=</span><span class="token keyword">float4</span><span class="token punctuation">(</span>normalWS<span class="token punctuation">,</span><span class="token number">0.0f</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    o<span class="token punctuation">.</span>positionWS<span class="token operator">=</span>positionWS<span class="token punctuation">;</span>
+    <span class="token keyword">return</span> o<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><code>VertexData</code>：分别是原始坐标（模型空间），纹理坐标（UV），原始法线（模型空间）。<br><code>VertexOutput</code>：顶点着色器VS和像素着色器PS的通讯，定义了GPU处理完几何体之后哪些数据需要被处理为片元着色。这里的参数分别是裁剪空间坐标，纹理坐标UV，世界空间法线，世界空间坐标。<br><code>cbuffer X</code>：常量缓冲区，对应参数分别为模型矩阵，观察矩阵，投影矩阵，法线变换矩阵，预留填充。<br><code>main</code>：核心逻辑。<br><strong>pbr_ps.hlsl</strong>：片元&#x2F;像素着色器(Pixel Shader - 光栅化阶段)</p>
+<pre class="line-numbers language-hlsl" data-language="hlsl"><code class="language-hlsl"><span class="token keyword">struct</span> <span class="token class-name">PSInput</span><span class="token punctuation">&#123;</span>
+    <span class="token keyword">float4</span> position<span class="token operator">:</span>SV_POSITION<span class="token punctuation">;</span>
+    <span class="token keyword">float4</span> texcoord<span class="token operator">:</span>TEXCOORD0<span class="token punctuation">;</span>
+    <span class="token keyword">float4</span> normal<span class="token operator">:</span>NORMAL<span class="token punctuation">;</span>
+    <span class="token keyword">float4</span> positionWS<span class="token operator">:</span>TEXCOORD1<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+<span class="token keyword">float4</span> <span class="token function">main</span><span class="token punctuation">(</span>PSInput inPSInput<span class="token punctuation">)</span><span class="token operator">:</span>SV_TARGET<span class="token punctuation">&#123;</span>
+    <span class="token keyword">float3</span> finalColor<span class="token operator">=</span><span class="token keyword">float3</span><span class="token punctuation">(</span><span class="token number">0.0f</span><span class="token punctuation">,</span><span class="token number">0.0f</span><span class="token punctuation">,</span><span class="token number">0.0f</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">float3</span> ambientColor<span class="token operator">=</span><span class="token keyword">float3</span><span class="token punctuation">(</span><span class="token number">0.0f</span><span class="token punctuation">,</span><span class="token number">0.0f</span><span class="token punctuation">,</span><span class="token number">0.0f</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">float3</span> diffuseColor<span class="token operator">=</span><span class="token keyword">float3</span><span class="token punctuation">(</span><span class="token number">0.0f</span><span class="token punctuation">,</span><span class="token number">0.0f</span><span class="token punctuation">,</span><span class="token number">0.0f</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">float3</span> specularColor<span class="token operator">=</span><span class="token keyword">float3</span><span class="token punctuation">(</span><span class="token number">0.0f</span><span class="token punctuation">,</span><span class="token number">0.0f</span><span class="token punctuation">,</span><span class="token number">0.0f</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    finalColor<span class="token operator">=</span>ambientColor<span class="token operator">+</span>diffuseColor<span class="token operator">+</span>specularColor<span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token keyword">float4</span><span class="token punctuation">(</span>finalColor<span class="token punctuation">,</span><span class="token number">1.0f</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>基本的环境光，漫反射和镜面高光。</p>
+<h1 id="编写材质球有关的代码搭建"><a href="#编写材质球有关的代码搭建" class="headerlink" title="编写材质球有关的代码搭建"></a>编写材质球有关的代码搭建</h1><p>更新后的<strong>Scene.cpp</strong>如下：</p>
+<pre class="line-numbers language-C++" data-language="C++"><code class="language-C++">#include &quot;Scene.h&quot;
+#include &quot;BattleFireDirect3D12.h&quot;
+#include &quot;FrameBuffer.h&quot;
+#include &quot;Node.h&quot;
+#include &quot;Camera.h&quot;
+#include &quot;Material.h&quot;
+
+FrameBuffer* gHDRFBO &#x3D; nullptr;
+Node* gNode &#x3D; nullptr;
+DirectX::XMMATRIX gProjectionMatrix;
+Camera gMainCamera;
+
+void InitSphere(ID3D12GraphicsCommandList* inCommandList) &#123;
+	gNode &#x3D; new Node;
+	StaticMeshComponent* staticMesh &#x3D; new StaticMeshComponent;
+	staticMesh-&gt;InitFromFile(inCommandList, &quot;Res&#x2F;Model&#x2F;Sphere.staticmesh&quot;);
+	gNode-&gt;mStaticMeshComponent &#x3D; staticMesh;
+	Material* material &#x3D; new Material(L&quot;Res&#x2F;pbr_vs.hlsl&quot;, L&quot;Res&#x2F;pbr_ps.hlsl&quot;);
+	material-&gt;SetCullMode(D3D12_CULL_MODE_FRONT);
+	gNode-&gt;mStaticMeshComponent &#x3D; staticMesh;
+	gNode-&gt;mStaticMeshComponent-&gt;mMaterial &#x3D; material;
+&#125;
+
+void InitScene(int inWidth, int inHeight)
+&#123;
+	gProjectionMatrix &#x3D; DirectX::XMMatrixPerspectiveFovLH(
+		(45.0f * 3.14f) &#x2F; 180.0f, float(inWidth) &#x2F; float(inHeight),
+		0.1f, 1000.0f
+	);
+	gMainCamera.Init(DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f),
+		5.0f, DirectX::XMVectorSet(0.0f,-0.2f,1.0f,0.0f));
+	gHDRFBO &#x3D; new FrameBuffer;
+	gHDRFBO-&gt;SetSize(inWidth, inHeight);
+	gHDRFBO-&gt;AttachColorBuffer(DXGI_FORMAT_R32G32B32A32_FLOAT);
+	gHDRFBO-&gt;AttachDepthBuffer();
+	RHICommandList rhiCommandList;
+	InitSphere(rhiCommandList.mCommandList);
+&#125;
+
+void RenderOneFrame(float inDeltaTime)
+&#123;
+	&#x2F;&#x2F;ldr
+	RHICommandList rhiCommandList;
+	&#x2F;&#x2F;draw skybox
+	&#x2F;&#x2F;draw material sphere
+	FrameBufferRT* rt &#x3D; gHDRFBO-&gt;BeginRendering(rhiCommandList.mCommandList);
+	gNode-&gt;Draw(rhiCommandList.mCommandList, gProjectionMatrix, gMainCamera, rt-&gt;mColorBuffer.mFormat, rt-&gt;mDSBuffer.mFormat);
+	gHDRFBO-&gt;EndRendering(rhiCommandList.mCommandList);
+	delete rt;
+	rt &#x3D; BeginRenderFrame(rhiCommandList.mCommandList);
+	&#x2F;&#x2F;tone mapping, hdr -&gt; swapchain
+	EndRenderFrame(rhiCommandList.mCommandList);
+	delete rt;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h1 id="关于调试"><a href="#关于调试" class="headerlink" title="关于调试"></a>关于调试</h1><p>在项目属性，生成后事件中编写以下内容：</p>
+<pre class="line-numbers language-none"><code class="language-none">editbin&#x2F;subsystem:console $(OutDir)$(ProjectName).exe<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>下面再补充</p>
+</div></section><div id="reward-container"><span class="hty-icon-button button-glow" id="reward-button" title="打赏" onclick="var qr = document.getElementById(&quot;qr&quot;); qr.style.display = (qr.style.display === &quot;none&quot;) ? &quot;block&quot; : &quot;none&quot;;"><span class="icon iconify" data-icon="ri:hand-coin-line"></span></span><div id="reward-comment">如果有用的话，可以给俺小钱钱支持喵~</div><div id="qr" style="display:none;"><div style="display:inline-block"><a href="/images/PaymentQRCode/zfb.jpg"><img loading="lazy" src="/images/PaymentQRCode/zfb.jpg" alt="支付宝" title="支付宝"></a><div><span style="color:#00A3EE"><span class="icon iconify" data-icon="ri:alipay-line"></span></span></div></div><div style="display:inline-block"><a href="/images/PaymentQRCode/qq.png"><img loading="lazy" src="/images/PaymentQRCode/qq.png" alt="QQ 支付" title="QQ 支付"></a><div><span style="color:#12B7F5"><span class="icon iconify" data-icon="ri:qq-line"></span></span></div></div><div style="display:inline-block"><a href="/images/PaymentQRCode/wechat.png"><img loading="lazy" src="/images/PaymentQRCode/wechat.png" alt="微信支付" title="微信支付"></a><div><span style="color:#2DC100"><span class="icon iconify" data-icon="ri:wechat-pay-line"></span></span></div></div></div></div><ul class="post-copyright"><li class="post-copyright-author"><strong>本文作者：</strong>浔浔</li><li class="post-copyright-link"><strong>本文链接：</strong><a href="https://xungameworld.vercel.app/2026/03/02/Direct3D%E5%AE%9E%E7%8E%B0PBR%E6%B8%B2%E6%9F%93/" title="Direct3D实现PBR渲染">https://xungameworld.vercel.app/2026/03/02/Direct3D%E5%AE%9E%E7%8E%B0PBR%E6%B8%B2%E6%9F%93/</a></li><li class="post-copyright-license"><strong>版权声明：</strong>本博客所有文章除特别声明外，均默认采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" target="_blank" rel="noopener" title="CC BY-NC-SA 4.0 "><span class="icon iconify" data-icon="ri:creative-commons-line"></span><span class="icon iconify" data-icon="ri:creative-commons-by-line"></span><span class="icon iconify" data-icon="ri:creative-commons-nc-line"></span><span class="icon iconify" data-icon="ri:creative-commons-sa-line"></span></a> 许可协议。</li></ul></article><div class="post-nav"><div class="post-nav-item"><a class="post-nav-prev" href="/2026/03/03/PBR%E6%B5%81%E7%A8%8B-%E6%A5%94%E5%AD%90/" rel="prev" title=""><span class="icon iconify" data-icon="ri:arrow-left-s-line"></span><span class="post-nav-text"></span></a></div><div class="post-nav-item"><a class="post-nav-next" href="/2026/02/25/%E5%B0%91%E5%A5%B3%E5%89%8D%E7%BA%BFVepley%E6%B8%B2%E6%9F%93%E5%88%86%E6%9E%90/" rel="next" title="少女前线Vepley渲染分析"><span class="post-nav-text">少女前线Vepley渲染分析</span><span class="icon iconify" data-icon="ri:arrow-right-s-line"></span></a></div></div></div><div class="hty-card" id="comment"><div class="comment-tooltip text-center"><span>如果您有任何关于博客内容的相关讨论，欢迎前往 <a href="https://github.com/SUN-SisterLover/SUN-SisterLover.github.io/discussions" target="_blank">GitHub Discussions</a> 与我交流。</span><br></div></div></main><footer class="sidebar-translate" id="footer"><div class="copyright"><span>&copy; 2025 – 2026 </span><span class="with-love" id="animate" title="☀️"><span class="icon iconify" data-icon="ri:cloud-line"></span></span><span class="author"> 浔浔</span></div><div class="powered"><span>由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v8.1.1</span><span class="footer-separator">|</span><span>主题 - <a rel="noopener" href="https://github.com/YunYouJun/hexo-theme-yun" target="_blank"><span>Yun</span></a> v1.10.11</span></div></footer></div><a class="hty-icon-button" id="back-to-top" aria-label="back-to-top" href="#"><span class="icon iconify" data-icon="ri:arrow-up-s-line"></span><svg class="progress-circle-container" viewBox="0 0 100 100"><circle class="progress-circle" id="progressCircle" cx="50" cy="50" r="48" fill="none" stroke="#8E71C1" stroke-width="2" stroke-linecap="round"></circle></svg></a><script src="https://fastly.jsdelivr.net/npm/medium-zoom@1.0.6/dist/medium-zoom.min.js"></script><script>const images = [...document.querySelectorAll('.markdown-body img')]
+mediumZoom(images)</script><style>.medium-zoom-image {
+  z-index: 99;
+}</style></body></html>
