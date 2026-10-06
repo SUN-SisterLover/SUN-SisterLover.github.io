@@ -345,7 +345,7 @@ export const SITE_CONFIG: SiteConfig = {
   steam: {
     enabled: true,
     // SteamID64 / 自定义 URL 名 / 完整主页链接都可以
-    steamId: '76561199319113394',
+    steamId: '76561199023640449',
     refreshSeconds: 60,
     apiBase: '/api/steam',
   },
