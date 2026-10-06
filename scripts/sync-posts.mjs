@@ -118,12 +118,20 @@ function main() {
 
   for (const file of files) {
     const raw = readFileSync(join(MD_DIR, file), 'utf-8')
-    const { meta, body } = parseFrontmatter(raw)
+    const { meta, body: rawBody } = parseFrontmatter(raw)
 
     if (!meta.id) {
       meta.id = file.replace(/\.md$/, '')
       console.warn(`  \u26a0  ${file}: no "id" in frontmatter, using "${meta.id}"`)
     }
+
+    // normalize image paths so Obsidian-pasted links work on the site:
+    //   ../public/images/x.png  /  public/images/x.png  /  /images/x.png
+    // all become the site-root-relative  images/x.png
+    const body = rawBody.replace(
+      /(!\[[^\]]*\]\()(?:\.\.\/)*(?:public\/)?(?=images\/)/g,
+      '$1',
+    )
 
     const langs = splitBody(body)
     posts.push({ meta, zh: langs.zh, en: langs.en })

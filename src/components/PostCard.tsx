@@ -4,7 +4,7 @@ import { useLang } from '../i18n'
 import { type PostDef } from '../data/posts'
 
 export default function PostCard({ post, onSelect }: { post: PostDef; onSelect: () => void }) {
-  const { t, pick } = useLang()
+  const { t } = useLang()
   const scope = useRef<HTMLElement>(null)
 
   useGSAP(
@@ -60,11 +60,11 @@ export default function PostCard({ post, onSelect }: { post: PostDef; onSelect: 
               data-card-title
               className="text-2xl font-bold tracking-tight transition-colors duration-200 ease-[var(--ease-out)] md:text-3xl hover:text-accent"
             >
-              {pick(post.title)}
+              {post.title.zh}
             </h2>
           </button>
           <p data-card-fade className="text-dim mt-3 max-w-2xl text-sm leading-relaxed md:text-base">
-            {pick(post.excerpt)}
+            {post.excerpt.zh}
           </p>
           <div
             data-card-fade

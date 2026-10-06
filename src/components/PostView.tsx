@@ -8,65 +8,8 @@ import { codeToHtml } from 'shiki'
 import { gsap, useGSAP, SplitText, prefersReducedMotion } from '../lib/gsap'
 import { useLang } from '../i18n'
 import { type PostDef } from '../data/posts'
-import type { PostAudioTrack } from '../data/posts/types'
-import { ArrowLeft, Music, Play, Pause } from 'lucide-react'
-import { useBgm } from './AudioProvider'
+import { ArrowLeft } from 'lucide-react'
 import PostComments from './PostComments'
-import { withBase } from '../lib/base'
-
-/** inline music card rendered by a `^track-id^` marker line */
-function MusicCard({ track }: { track: PostAudioTrack }) {
-  const { meta, playing, setTrack, toggle } = useBgm()
-  const isCurrent = meta.url === track.url
-
-  const handleClick = () => {
-    if (isCurrent) {
-      toggle()
-    } else {
-      setTrack({
-        url: track.url,
-        title: track.title || 'Untitled',
-        artist: track.artist || '',
-        cover: track.cover || '',
-      })
-    }
-  }
-
-  return (
-    <button
-      onClick={handleClick}
-      aria-label={isCurrent && playing ? '暂停' : '播放'}
-      className={`my-4 flex w-full max-w-md items-center gap-3 rounded-xl border p-3 text-left transition-all duration-200 ease-[var(--ease-out)] ${
-        isCurrent
-          ? 'border-accent/60 bg-accent/[0.10]'
-          : 'border-line bg-ink-2/40 hover:border-accent/40 hover:bg-ink-2/60'
-      }`}
-    >
-      {/* left: album cover */}
-      <span className="relative size-14 shrink-0 overflow-hidden rounded-md border border-line bg-ink">
-        {track.cover ? (
-          <img src={withBase(track.cover)} alt="" className="size-full object-cover" />
-        ) : (
-          <span className="grid size-full place-items-center text-accent">
-            <Music className="size-5" />
-          </span>
-        )}
-      </span>
-
-      {/* right: title, then artist on the next line */}
-      <span className="min-w-0 flex-1">
-        <span className="block truncate font-mono text-sm text-paper">
-          {track.title || 'Untitled'}
-        </span>
-        <span className="block truncate font-mono text-xs text-dim">{track.artist || ''}</span>
-      </span>
-
-      <span className="shrink-0 text-accent">
-        {isCurrent && playing ? <Pause className="size-4" /> : <Play className="size-4" />}
-      </span>
-    </button>
-  )
-}
 
 const escapeHtml = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -221,15 +164,12 @@ function Toc({ headings, label }: { headings: Heading[]; label: string }) {
 }
 
 export default function PostView({ post, onBack }: { post: PostDef; onBack: () => void }) {
-  const { t, pick } = useLang()
+  const { t } = useLang()
   const scope = useRef<HTMLElement>(null)
 
-  const tracksById = useMemo(
-    () => new Map((post.audio ?? []).map((tr) => [tr.id, tr])),
-    [post.audio],
-  )
-
-  const bodyLines = useMemo(() => pick(post.body).split('\n'), [post, pick])
+  // posts are Chinese-only by design — the language toggle affects UI chrome
+  // (nav, buttons, labels) but never article content
+  const bodyLines = useMemo(() => post.body.zh.split('\n'), [post])
 
   /** custom block parser: keep track markers, headings (-> TOC) and fenced
    *  code blocks as first-class blocks; everything else becomes a paragraph
@@ -339,7 +279,7 @@ export default function PostView({ post, onBack }: { post: PostDef; onBack: () =
           data-post-title
           className="text-3xl font-bold tracking-tight md:text-5xl leading-tight"
         >
-          {pick(post.title)}
+          {post.title.zh}
         </h1>
 
         <p data-post-meta className="text-dim mt-4 font-mono text-xs tracking-[0.2em]">
@@ -353,9 +293,10 @@ export default function PostView({ post, onBack }: { post: PostDef; onBack: () =
               style={{ color: 'var(--color-paper)' }}
             >
             {blocks.map((b) => {
+              // in-post music cards were removed so article audio can never
+              // interrupt or replace the home BGM — marker lines render nothing
               if (b.kind === 'track') {
-                const track = tracksById.get(b.id)
-                return track ? <MusicCard key={b.key} track={track} /> : null
+                return null
               }
               if (b.kind === 'heading') {
                 const Tag = `h${b.level}` as 'h1' | 'h2' | 'h3'

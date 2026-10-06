@@ -1,5 +1,11 @@
 export type Bilingual = { zh: string; en: string }
 
+export type FriendLink = {
+  name: string
+  url: string
+  desc: Bilingual
+}
+
 export type ThemeColors = {
   ink: string
   ink2: string
@@ -69,6 +75,7 @@ export type SiteConfig = {
   }
   colors: Record<PaletteId, Palette>
   githubUrl: string
+  friends: FriendLink[]
   nav: {
     showLang: boolean
     showTheme: boolean
@@ -306,6 +313,14 @@ export const SITE_CONFIG: SiteConfig = {
 
   githubUrl: 'https://github.com/SUN-SisterLover',
 
+  friends: [
+    {
+      name: '示例友链（在 site.config.ts 的 friends 里改成你朋友的）',
+      url: 'https://github.com/SUN-SisterLover',
+      desc: { zh: '把这里换成对方的简介', en: 'Replace with your friend\'s bio' },
+    },
+  ],
+
   nav: {
     showLang: true,
     showTheme: true,
@@ -433,8 +448,13 @@ export const SITE_CONFIG: SiteConfig = {
       'doc.title': '喵小浔',
       'hero.kicker': 'Blog',
       'hero.badge': 'Game · Engine · Dream',
-      'hero.sub': '个人作品集',
+      'hero.sub': '个人博客',
       'hero.readMore': '阅读文章',
+      'search.placeholder': '搜索标题 / 标签 / 内容 …',
+      'search.empty': '没有找到匹配的文章',
+      'friends.title': '友链',
+      'pagination.prev': '上一页',
+      'pagination.next': '下一页',
       'meta.posts': '文章',
       'meta.tags': '标签',
       'meta.updated': '更新于',
@@ -546,6 +566,11 @@ export const SITE_CONFIG: SiteConfig = {
       'hero.badge': 'Game · Engine · Dream',
       'hero.sub': 'Just a sub title meow~',
       'hero.readMore': 'Read posts',
+      'search.placeholder': 'Search title / tags / content …',
+      'search.empty': 'No posts found',
+      'friends.title': 'Friends',
+      'pagination.prev': 'Prev',
+      'pagination.next': 'Next',
       'meta.posts': 'posts',
       'meta.tags': 'tags',
       'meta.updated': 'updated',

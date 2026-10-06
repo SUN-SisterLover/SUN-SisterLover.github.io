@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Play, Pause, Music, Volume2, VolumeX, Search } from 'lucide-react'
-import { useBgm } from './AudioProvider'
+import { useBgm, useBgmProgress } from './AudioProvider'
 import { SITE_CONFIG } from '../site.config'
 import { useLang } from '../i18n'
 import {
@@ -29,8 +29,6 @@ export default function FloatingPlayer() {
     available,
     playing,
     toggle,
-    currentTime,
-    duration,
     seek,
     volume,
     setVolume,
@@ -40,6 +38,7 @@ export default function FloatingPlayer() {
     setTrack,
     showLocalBgm,
   } = useBgm()
+  const { currentTime, duration } = useBgmProgress()
 
   const cfg = SITE_CONFIG.netease
   const neteaseEnabled = cfg.enabled
