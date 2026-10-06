@@ -1,0 +1,45 @@
+{
+  "name": "nagi-blog",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "sync-posts": "node scripts/sync-posts.mjs",
+    "sync-comments": "node scripts/sync-comments.mjs",
+    "update": "node scripts/sync-posts.mjs",
+    "fonts": "node scripts/subset-fonts.ts",
+    "dev": "node scripts/sync-posts.mjs && vite",
+    "build": "node scripts/sync-posts.mjs && tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "start": "node server.js",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "@gsap/react": "^2.1.2",
+    "express": "^4.21.0",
+    "gsap": "^3.13.0",
+    "katex": "^0.19.0",
+    "live2d-widget": "^3.1.4",
+    "lucide-react": "^0.525.0",
+    "NeteaseCloudMusicApi": "^4.32.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-markdown": "^10.1.0",
+    "rehype-katex": "^7.0.1",
+    "rehype-raw": "^7.0.0",
+    "remark-gfm": "^4.0.1",
+    "remark-math": "^6.0.0",
+    "shiki": "^4.4.2"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.10",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^4.5.0",
+    "fontverter": "^2.0.0",
+    "harfbuzzjs": "^0.10.3",
+    "tailwindcss": "^4.1.10",
+    "typescript": "~5.8.3",
+    "vite": "^6.3.5"
+  }
+}

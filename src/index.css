@@ -1,0 +1,333 @@
+@import "tailwindcss";
+
+/* Custom fonts (subset to woff2 via `py scripts/subset-fonts.py`):
+   - 'SF Pro'      : Latin / digits (English, numbers, punctuation)
+   - 'PingFang UI' : CJK (Chinese)
+   The browser falls back per glyph, so Latin/numbers use SF Pro and
+   Chinese characters fall through to PingFang automatically. */
+@font-face {
+  font-family: 'SF Pro';
+  src: url('./fonts/SFPro.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'PingFang UI';
+  src: url('./fonts/PingFang.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Register color tokens so theme/palette switches can interpolate smoothly. */
+@property --color-ink {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #0f0f17;
+}
+@property --color-ink-2 {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #14141f;
+}
+@property --color-paper {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #f5f5f0;
+}
+@property --color-dim {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #a0a0b0;
+}
+@property --color-accent {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #d4ff1f;
+}
+@property --color-accent-2 {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #4ff0b7;
+}
+@property --color-amber {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #ffb347;
+}
+@property --color-line {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: rgb(245 245 240 / 0.15);
+}
+@property --grid-line {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: rgb(245 245 240 / 0.06);
+}
+@property --stroke-faint {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: rgb(245 245 240 / 0.22);
+}
+
+@theme {
+  --font-display: 'SF Pro', 'PingFang UI', 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', system-ui, sans-serif;
+  /* Wire our custom stack into Tailwind's default so `font-sans` and the
+     preflight `html` rule also pick up SF Pro / PingFang. */
+  --default-font-family: 'SF Pro', 'PingFang UI', 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --color-ink: var(--color-ink);
+  --color-ink-2: var(--color-ink-2);
+  --color-paper: var(--color-paper);
+  --color-dim: var(--color-dim);
+  --color-accent: var(--color-accent);
+  --color-accent-2: var(--color-accent-2);
+  --color-amber: var(--color-amber);
+  --color-line: var(--color-line);
+
+  --color-acid: var(--color-accent);
+  --color-night: var(--color-ink);
+
+  /* Motion tokens: reusable easings and durations. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --duration-instant: 0ms;
+  --duration-fast: 120ms;
+  --duration-normal: 180ms;
+  --duration-emphasis: 280ms;
+  --duration-slow: 450ms;
+}
+
+:root {
+  --grid-line: initial;
+  --stroke-faint: initial;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-ink);
+  color: var(--color-paper);
+  /* Defined directly (not via a theme token) so it always applies.
+     Latin/digits -> SF Pro; CJK -> PingFang; then system fallbacks. */
+  font-family: 'SF Pro', 'PingFang UI', 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Theme transitions are gated until the initial paint to prevent a flash
+   when restoring saved theme/palette preferences. */
+[data-theme-ready] body,
+[data-theme-ready] .theme-transition {
+  transition: background-color 0.45s var(--ease-out), color 0.45s var(--ease-out), border-color 0.45s var(--ease-out), fill 0.45s var(--ease-out), stroke 0.45s var(--ease-out);
+}
+
+::selection {
+  background: var(--color-accent);
+  color: var(--color-ink);
+}
+
+@utility text-outline {
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--color-paper);
+}
+
+@utility text-outline-faint {
+  color: transparent;
+  -webkit-text-stroke: 1px var(--stroke-faint);
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@utility bg-blueprint {
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+@utility bg-gradient-accent {
+  background-image: linear-gradient(135deg, var(--color-accent), var(--color-accent-2));
+}
+
+@utility text-gradient-accent {
+  background-image: linear-gradient(135deg, var(--color-accent), var(--color-accent-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@utility bg-gradient-surface {
+  background-image: linear-gradient(180deg, color-mix(in oklab, var(--color-paper) 6%, transparent), transparent);
+}
+
+@utility ring-accent {
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-accent) 30%, transparent);
+}
+
+/* Micro-interaction helpers: use on buttons / interactive chips.
+   Scale is gated to fine-pointer devices to avoid false hovers on touch. */
+@utility press-sm {
+  @media (hover: hover) and (pointer: fine) {
+    transition: transform var(--duration-fast) var(--ease-out);
+    &:active {
+      transform: scale(0.96);
+    }
+  }
+}
+
+@utility press-md {
+  @media (hover: hover) and (pointer: fine) {
+    transition: transform var(--duration-fast) var(--ease-out);
+    &:active {
+      transform: scale(0.94);
+    }
+  }
+}
+
+@utility lift-sm {
+  @media (hover: hover) and (pointer: fine) {
+    transition: transform var(--duration-normal) var(--ease-out);
+    &:hover {
+      transform: translateY(-2px);
+    }
+  }
+}
+
+@utility transition-theme {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: var(--ease-out);
+  transition-duration: var(--duration-normal);
+}
+
+@utility focus-ring {
+  outline: none;
+  transition: box-shadow var(--duration-fast) var(--ease-out);
+  &:focus-visible {
+    box-shadow: 0 0 0 2px var(--color-ink), 0 0 0 4px var(--color-accent);
+  }
+}
+
+/* Custom range input styling with a gradient track. */
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(to right, var(--color-accent), var(--color-accent-2));
+  cursor: pointer;
+}
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--color-paper);
+  border: 2px solid var(--color-accent);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.25);
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+input[type='range']::-webkit-slider-thumb:hover {
+  transform: scale(1.12);
+}
+input[type='range']::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--color-paper);
+  border: 2px solid var(--color-accent);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.25);
+}
+
+@keyframes breathe {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.82); }
+}
+
+.dot-breathe {
+  animation: breathe 1.8s ease-in-out infinite;
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 2.5s linear infinite;
+}
+
+/* lofi playlist "now playing" equalizer bars: staggered via inline animation-delay */
+@keyframes eq {
+  0%, 100% { transform: scaleY(0.35); }
+  50% { transform: scaleY(1); }
+}
+
+.eq-bar {
+  animation: eq 1s ease-in-out infinite;
+  transform-origin: bottom;
+}
+
+/* Slow "Ken Burns" drift for the rotating home background: scale up slightly
+   while panning, so a static image reads as a subtle dynamic wallpaper. */
+@keyframes ken-burns {
+  0%   { transform: scale(1) translate(0, 0); }
+  50%  { transform: scale(1.12) translate(-1.5%, -1%); }
+  100% { transform: scale(1) translate(0, 0); }
+}
+
+.ken-burns {
+  animation: ken-burns 24s ease-in-out infinite;
+}
+
+/* Shiki syntax highlighting inside frosted code panels.
+   Keep the panel's own background; text color follows the site's
+   light/dark via `[data-theme]`. */
+.shiki {
+  margin: 0;
+  padding: 1rem;
+  background: transparent !important;
+  overflow-x: auto;
+  font-size: 0.75rem;
+  line-height: 1.625;
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+}
+.shiki code {
+  font-family: inherit;
+  display: block;
+}
+[data-theme='dark'] .shiki,
+[data-theme='dark'] .shiki span {
+  color: var(--shiki-dark) !important;
+  font-style: var(--shiki-dark-font-style) !important;
+  font-weight: var(--shiki-dark-font-weight) !important;
+  text-decoration: var(--shiki-dark-text-decoration) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .dot-breathe { animation: none; }
+  .animate-spin-slow { animation: none; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

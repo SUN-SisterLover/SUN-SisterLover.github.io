@@ -1,0 +1,60 @@
+import { useRef } from 'react'
+import { gsap, useGSAP, SplitText, prefersReducedMotion } from '../lib/gsap'
+import { useLang } from '../i18n'
+import { SITE_CONFIG } from '../site.config'
+
+export default function Footer() {
+  const { t } = useLang()
+  const scope = useRef<HTMLElement>(null)
+  const { brand, githubUrl } = SITE_CONFIG
+
+  useGSAP(
+    () => {
+      if (prefersReducedMotion()) return
+      const split = SplitText.create('[data-footer-title]', { type: 'chars', mask: 'chars' })
+      gsap.from(split.chars, {
+        yPercent: 120,
+        duration: 0.8,
+        ease: 'power4.out',
+        stagger: 0.03,
+        scrollTrigger: { trigger: scope.current, start: 'top 88%', once: true },
+      })
+      gsap.from('[data-footer-fade]', {
+        y: 20,
+        autoAlpha: 0,
+        duration: 0.7,
+        ease: 'power3.out',
+        stagger: 0.1,
+        scrollTrigger: { trigger: scope.current, start: 'top 88%', once: true },
+      })
+      return () => split.revert()
+    },
+    { scope },
+  )
+
+  return (
+    <footer ref={scope} className="border-line border-t">
+      <div className="mx-auto w-full max-w-7xl px-4 py-12 md:py-20">
+        <p data-footer-fade className="text-accent font-mono text-xs tracking-[0.35em] uppercase">
+          {t('footer.tagline')}
+        </p>
+        <div className="mt-8 flex flex-col justify-between gap-8 md:flex-row md:items-end">
+          <a
+            href="#top"
+            data-footer-title
+            className="text-outline hover:text-gradient-accent text-4xl font-bold tracking-tight uppercase transition-all duration-300 ease-[var(--ease-out)] sm:text-5xl md:text-7xl"
+          >
+            {brand.name}
+          </a>
+          <div data-footer-fade className="text-dim font-mono text-xs leading-relaxed">
+            <a href={githubUrl} target="_blank" rel="noreferrer" className="hover:text-accent transition-colors">
+              {githubUrl.replace('https://', '')}
+            </a>
+            <p className="mt-2">{t('footer.built')}</p>
+            <p className="mt-1">&copy; {new Date().getFullYear()} {brand.shortName}</p>
+          </div>
+        </div>
+      </div>
+    </footer>
+  )
+}

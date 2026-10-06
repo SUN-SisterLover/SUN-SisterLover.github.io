@@ -1,0 +1,2 @@
+# Drop your audio files here, e.g. bgm.mp3, test.mp3
+# Referenced from site.config.ts (audio.home.url) and post frontmatter (audio:)
